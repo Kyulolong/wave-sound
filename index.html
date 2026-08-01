@@ -197,6 +197,8 @@ section#mixer{margin:20px 0 6px}
     <p class="gtitle">누군가에게 이 바다를 보내요</p>
     <label class="glabel" for="gName">받는 사람 이름이나 애칭</label>
     <input id="gName" type="text" maxlength="24" placeholder="예: 여보, 엄마, 지혜">
+    <label class="glabel" for="gBeach">보여줄 바다나 장소 <span class="gopt">선택 · 비워두면 그날의 바다가 떠요</span></label>
+    <input id="gBeach" type="text" maxlength="20" placeholder="예: 우리가 걸었던 협재">
     <label class="glabel" for="gLetter">몰래 넣어둘 편지 <span class="gopt">선택 · 달을 세 번 누르면 나와요</span></label>
     <textarea id="gLetter" rows="6" maxlength="4000" placeholder="받는 분만 볼 수 있는 비밀 편지예요."></textarea>
     <label class="gcheck"><input id="gMix" type="checkbox" checked> 지금 듣고 있는 소리 조합도 함께 보내기</label>
@@ -215,7 +217,7 @@ section#mixer{margin:20px 0 6px}
 
 <script>
 /* ===== 선물 링크: 이름·편지·믹스가 URL 해시(#g=…) 안에만 담겨요. 서버 저장 없음 ===== */
-const GIFT = { n:'', l:'', m:null };
+const GIFT = { n:'', l:'', b:'', m:null };
 let giftRaw = '';
 
 function bytesToB64u(bytes){
@@ -256,6 +258,7 @@ async function initGift(){
     const o=await unpackGift(giftRaw);
     GIFT.n=String(o.n||'').slice(0,24);
     GIFT.l=String(o.l||'').slice(0,4000);
+    GIFT.b=String(o.b||'').slice(0,20);
     GIFT.m=(o.m&&typeof o.m==='object')?o.m:null;
   }catch(e){ giftRaw=''; GIFT.err=true; }
 }
@@ -291,9 +294,29 @@ const PRESETS = [
   {nm:'여름 밤',     mix:{crickets:44, chimes:22, wind:12, waves:10}},
   {nm:'깊은 쉼',     mix:{bowl:46, wind:10, chimes:14}},
 ];
+/* p = 너울이 한 번 밀려오는 주기(초). 지중해는 짧고 잘게, 대서양은 길고 크게 */
 const BEACHES = [
-  {n:'강릉 경포', p:9},{n:'제주 협재', p:7},{n:'양양 죽도', p:8},{n:'고성 봉포', p:10},
-  {n:'태안 꽃지', p:11},{n:'완도 명사십리', p:9},{n:'남해 상주', p:12},{n:'울진 망양', p:8},{n:'포항 월포', p:10},
+  /* 동해 */
+  {n:'강릉 경포', p:9},{n:'강릉 안목', p:9},{n:'속초 외옹치', p:10},{n:'고성 봉포', p:10},
+  {n:'양양 죽도', p:8},{n:'양양 하조대', p:9},{n:'삼척 맹방', p:10},{n:'동해 망상', p:10},
+  {n:'울진 망양', p:8},{n:'영덕 고래불', p:9},{n:'포항 월포', p:10},
+  /* 남해 · 서해 */
+  {n:'부산 해운대', p:9},{n:'부산 송정', p:8},{n:'거제 학동', p:11},{n:'통영 비진도', p:12},
+  {n:'남해 상주', p:12},{n:'여수 만성리', p:10},{n:'완도 명사십리', p:9},{n:'신안 증도', p:12},
+  {n:'보령 대천', p:11},{n:'태안 꽃지', p:11},{n:'인천 을왕리', p:11},
+  /* 제주 */
+  {n:'제주 협재', p:7},{n:'제주 김녕', p:7},{n:'제주 이호테우', p:8},{n:'제주 중문', p:9},
+  /* 아시아 */
+  {n:'오키나와 니시하마', p:8},{n:'가마쿠라 유이가하마', p:9},{n:'다낭 미케', p:10},
+  {n:'푸껫 카타', p:10},{n:'보라카이 화이트', p:9},{n:'발리 짐바란', p:11},{n:'몰디브 후루카스', p:8},
+  /* 태평양 · 아메리카 */
+  {n:'하와이 와이키키', p:12},{n:'하와이 라니카이', p:9},{n:'산타모니카', p:12},
+  {n:'빅서 파이퍼', p:14},{n:'툴룸', p:10},{n:'리우 이파네마', p:13},
+  /* 대서양 · 지중해 */
+  {n:'나자레', p:16},{n:'리스본 카스카이스', p:13},{n:'산세바스티안 라콘차', p:12},
+  {n:'니스 프롬나드', p:7},{n:'산토리니 카마리', p:6},{n:'포지타노', p:6},{n:'즈라트니 라트', p:6},
+  /* 남반구 */
+  {n:'바이런 베이', p:13},{n:'케이프타운 캠스베이', p:12},
 ];
 
 const state = { vols:{}, playing:false, breath:false, timerMin:0, timerEnd:0 };
@@ -302,17 +325,49 @@ let AC=null, master, fadeGain, comp, analyser, convolver;
 const L={}, built={};
 let bufWhite, bufBrown, bufPink, bufBurst;
 
-/* ---------- 오늘의 바다 (날짜 시드) ---------- */
+/* ---------- 오늘의 바다 ----------
+   날짜가 씨앗이라 같은 날엔 누가 열어도 같은 바다가 뜬다.
+   목록을 한 바퀴 도는 동안에는 같은 바다가 두 번 나오지 않는다. */
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-const today = new Date();
-const seed = today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
-const drand = mulberry(seed);
-const BEACH = BEACHES[Math.floor(drand()*BEACHES.length)];
-const WAVE_PERIOD = BEACH.p + drand()*2 - 1;
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function dayNo(d){return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(1970,0,1))/86400000)}
+function shuffled(cycle){
+  const a=BEACHES.slice(), rnd=mulberry(cycle+1);
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+  return a;
+}
+function orderFor(cycle){
+  const a=shuffled(cycle);
+  /* 한 바퀴가 끝나고 다음 바퀴 첫날에 같은 바다가 이어지면 한 칸 밀어둔다 */
+  if(cycle>0 && a[0].n===shuffled(cycle-1).slice(-1)[0].n) return a.slice(1).concat(a[0]);
+  return a;
+}
+function beachOfDay(n){
+  const N=BEACHES.length, cycle=Math.floor(n/N);
+  return orderFor(cycle)[n-cycle*N];
+}
+
+let today=new Date(), curDay=null, BEACH=BEACHES[0], WAVE_PERIOD=9, previewBeach='';
+/* 자정을 넘겨도 켜둔 채로 날짜가 바뀌도록, 1분마다 도는 refreshSky가 이걸 부른다 */
+function applyDay(force){
+  const now=new Date(), n=dayNo(now);
+  if(n===curDay && !force) return;
+  curDay=n; today=now;
+  const custom = previewBeach || GIFT.b;
+  if(custom){
+    BEACH={n:custom};
+    WAVE_PERIOD=7+(hashStr(custom)%500)/100;   /* 같은 이름이면 늘 같은 파도 */
+  }else{
+    BEACH=beachOfDay(n);
+    WAVE_PERIOD=BEACH.p+mulberry(n)()*2-1;
+  }
+}
+applyDay(true);
 
 /* ---------- 인사말 / 하늘 ---------- */
 function hourMode(h){return h<5?'night':h<11?'morning':h<17?'day':h<21?'evening':'night'}
 function refreshSky(){
+  applyDay();
   const h = new Date().getHours(), m = hourMode(h);
   document.body.className = m==='night' ? '' : 'm-'+m;
   const pre = GIFT.n ? GIFT.n+', ' : '';
@@ -323,8 +378,10 @@ function refreshSky(){
         :        `${pre}이제 하루를 내려놓아도 돼요`;
   $('#greet').textContent = g;
   const days=['일','월','화','수','목','금','토'];
+  /* 직접 적어 보낸 장소면 '오늘의 바다' 수식 없이 그 이름만 */
+  const place = (previewBeach||GIFT.b) ? BEACH.n : `오늘의 바다, ${BEACH.n}`;
   $('#dateline').textContent =
-    `${today.getMonth()+1}월 ${today.getDate()}일 ${days[today.getDay()]}요일 · 오늘의 바다, ${BEACH.n}`;
+    `${today.getMonth()+1}월 ${today.getDate()}일 ${days[today.getDay()]}요일 · ${place}`;
 }
 setInterval(refreshSky, 60000);
 
@@ -909,12 +966,19 @@ $('#letterClose').onclick=()=>{letterEl.hidden=true};
 const giftEl=$('#gift');
 $('#giftBtn').onclick=()=>{ giftEl.hidden=false; };
 $('#gClose').onclick=()=>{ giftEl.hidden=true; };
+/* 적는 대로 맨 위 날짜줄에 바로 비쳐서, 받는 사람 화면을 미리 볼 수 있게 */
+$('#gBeach').oninput=()=>{
+  previewBeach=$('#gBeach').value.trim().slice(0,20);
+  applyDay(true); refreshSky();
+};
 $('#gMake').onclick=async()=>{
   const o={};
   const n=$('#gName').value.trim().slice(0,24);
   const l=$('#gLetter').value.trim().slice(0,4000);
+  const b=$('#gBeach').value.trim().slice(0,20);
   if(n)o.n=n;
   if(l)o.l=l;
+  if(b)o.b=b;
   if($('#gMix').checked){
     const m={};
     SOUNDS.forEach(s=>{const v=vol(s.id); if(v>0)m[s.id]=v});
@@ -943,6 +1007,7 @@ $('#gShare').onclick=()=>{
 /* ---------- 시작 ---------- */
 window.addEventListener('hashchange',()=>location.reload());
 initGift().then(()=>{
+  applyDay(true);
   refreshSky();
   restoreMix();
   if(GIFT.l){ $('#letterBody').textContent=GIFT.l; $('#footHint').hidden=false; }
