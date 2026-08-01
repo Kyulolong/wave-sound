@@ -991,17 +991,40 @@ $('#gMake').onclick=async()=>{
     ? '편지가 길어서 링크도 길어요. 카톡이나 메일로 보내는 걸 추천해요.'
     : '링크 하나에 전부 담겼어요. 서버엔 아무것도 저장되지 않아요.';
 };
+function flash(btn,msg,back){
+  btn.textContent=msg;
+  clearTimeout(btn._t);
+  btn._t=setTimeout(()=>{btn.textContent=back},2200);
+}
+async function copyLink(url){
+  try{ await navigator.clipboard.writeText(url); return true; }
+  catch(e){
+    try{
+      const o=$('#gOut'); o.focus(); o.select(); o.setSelectionRange(0,99999);
+      return document.execCommand('copy');
+    }catch(e2){ return false; }
+  }
+}
 $('#gCopy').onclick=async()=>{
   const url=$('#gOut').value; if(!url)return;
-  try{ await navigator.clipboard.writeText(url); }
-  catch(e){ $('#gOut').select(); document.execCommand('copy'); }
-  $('#gCopy').textContent='복사됐어요';
-  setTimeout(()=>{$('#gCopy').textContent='복사'},2000);
+  const ok=await copyLink(url);
+  flash($('#gCopy'), ok?'복사됐어요':'복사 안 됐어요', '복사');
+  if(!ok) $('#gHint').textContent='링크를 길게 눌러 직접 복사해 주세요.';
 };
-$('#gShare').onclick=()=>{
+$('#gShare').onclick=async()=>{
   const url=$('#gOut').value; if(!url)return;
-  if(navigator.share) navigator.share({title:'쉼, 바다', text:'눈을 감으면 도착하는 바다를 보내요.', url}).catch(()=>{});
-  else $('#gCopy').click();
+  const data={title:'쉼, 바다', text:'눈을 감으면 도착하는 바다를 보내요.', url};
+  /* 공유 시트를 쓸 수 있으면 그걸로. canShare까지 확인해야 데스크톱에서 헛돌지 않는다 */
+  if(navigator.share && (!navigator.canShare || navigator.canShare(data))){
+    try{ await navigator.share(data); return; }
+    catch(e){ if(e && e.name==='AbortError') return; }   /* 직접 닫은 거면 그대로 둔다 */
+  }
+  /* 못 열면 조용히 넘어가지 않고, 복사로 대신했다고 알려준다 */
+  const ok=await copyLink(url);
+  flash($('#gShare'), ok?'링크 복사됨':'복사 안 됐어요', '공유');
+  $('#gHint').textContent = ok
+    ? '이 기기에선 공유창을 못 열어서 링크를 복사해 뒀어요. 카톡에 붙여넣기 해주세요.'
+    : '링크를 길게 눌러 직접 복사해 주세요.';
 };
 
 /* ---------- 시작 ---------- */
