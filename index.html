@@ -44,7 +44,8 @@ body.m-morning .star,body.m-day .star{display:none}
 #celes{
   position:fixed;top:9%;right:11%;width:58px;height:58px;border-radius:50%;
   background:#e9e5d8;box-shadow:0 0 46px 8px rgba(233,229,216,.32);
-  cursor:pointer;z-index:1;transition:background 2s,box-shadow 2s;
+  /* main(z-index:2)이 좁은 화면에서 달 영역을 덮어 탭을 가로채므로 그 위로 올린다 */
+  cursor:pointer;z-index:3;transition:background 2s,box-shadow 2s;
   animation:float 14s ease-in-out infinite;
 }
 body.m-morning #celes,body.m-day #celes{background:#f6dca6;box-shadow:0 0 60px 14px rgba(246,220,166,.4)}
@@ -230,6 +231,8 @@ function b64uToBytes(s){
 }
 async function packGift(obj){
   const raw=new TextEncoder().encode(JSON.stringify(obj));
+  /* 짧은 편지는 압축하지 않는다 — 받는 사람 브라우저에 DecompressionStream이 없어도 열리도록 */
+  if(raw.length<=1200) return '0.'+bytesToB64u(raw);
   try{
     const st=new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'));
     return '1.'+bytesToB64u(new Uint8Array(await new Response(st).arrayBuffer()));
@@ -254,7 +257,7 @@ async function initGift(){
     GIFT.n=String(o.n||'').slice(0,24);
     GIFT.l=String(o.l||'').slice(0,4000);
     GIFT.m=(o.m&&typeof o.m==='object')?o.m:null;
-  }catch(e){ giftRaw=''; }
+  }catch(e){ giftRaw=''; GIFT.err=true; }
 }
 
 const $ = s => document.querySelector(s);
@@ -897,7 +900,7 @@ let taps=[], letterEl=$('#letter');
 $('#celes').onclick=()=>{
   if(!GIFT.l) return;
   const now=Date.now();
-  taps=taps.filter(t=>now-t<2200); taps.push(now);
+  taps=taps.filter(t=>now-t<3000); taps.push(now);
   if(taps.length>=3){ taps=[]; letterEl.hidden=false; }
 };
 $('#letterClose').onclick=()=>{letterEl.hidden=true};
@@ -943,6 +946,10 @@ initGift().then(()=>{
   refreshSky();
   restoreMix();
   if(GIFT.l){ $('#letterBody').textContent=GIFT.l; $('#footHint').hidden=false; }
+  else if(GIFT.err){
+    $('#footHint').textContent='링크가 조금 다쳤나 봐요. 보낸 사람에게 다시 받아 볼래요?';
+    $('#footHint').hidden=false;
+  }
 });
 </script>
 </body>
