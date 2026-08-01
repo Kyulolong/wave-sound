@@ -10,7 +10,9 @@
 <meta name="description" content="눈을 감으면 도착하는 바다. 열두 가지 소리를 섞어, 소중한 사람에게 편지와 함께 보내요.">
 <meta property="og:title" content="쉼, 바다">
 <meta property="og:description" content="눈을 감으면 도착하는 바다. 파도와 종달새를 섞어, 편지와 함께 보내요.">
-<meta property="og:image" content="og.png">
+<meta property="og:image" content="https://wave-sound-seec.vercel.app/og.png">
+<meta property="og:url" content="https://wave-sound-seec.vercel.app/">
+<meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -68,6 +70,9 @@ h1{font-size:23px;font-weight:400;line-height:1.5;margin:10px 0 26px}
 #play:active{transform:scale(.94)}
 #play.on{background:rgba(255,255,255,.22)}
 #play svg{width:26px;height:26px;fill:currentColor}
+/* SVG에는 hidden 프로퍼티가 없어서 아이콘 전환은 .on 클래스로 */
+#play #icPause,#play.on #icPlay{display:none}
+#play.on #icPause{display:block}
 #playHint{text-align:center;font-size:12px;color:var(--faint);margin-bottom:24px}
 .chips{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
@@ -150,7 +155,7 @@ section#mixer{margin:20px 0 6px}
 
   <button id="play" aria-label="재생">
     <svg id="icPlay" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>
-    <svg id="icPause" viewBox="0 0 24 24" hidden><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.6z"/></svg>
+    <svg id="icPause" viewBox="0 0 24 24"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.6z"/></svg>
   </button>
   <p id="playHint">눌러서 바다를 켜요</p>
 
@@ -819,8 +824,7 @@ playBtn.onclick=async()=>{
     keepAwake(false);
   }
   playBtn.classList.toggle('on',state.playing);
-  $('#icPlay').hidden=state.playing;
-  $('#icPause').hidden=!state.playing;
+  playBtn.setAttribute('aria-label',state.playing?'일시정지':'재생');
   $('#playHint').textContent = state.playing ? '이제 눈을 감아도 돼요' : '눌러서 바다를 켜요';
 };
 
@@ -837,7 +841,7 @@ function startFade(){
     fadeGain.gain.value=1;
     keepAwake(false);
     playBtn.classList.remove('on');
-    $('#icPlay').hidden=false; $('#icPause').hidden=true;
+    playBtn.setAttribute('aria-label','재생');
     $('#playHint').textContent='좋은 꿈 꿔요';
   },80000);
 }
