@@ -857,6 +857,27 @@ function buildBowl(){
 }
 
 /* ---------- 재생 / 정지 ---------- */
+/* iOS는 Web Audio만 쓰는 페이지를 'ambient' 오디오 세션으로 잡아서, 옆면 무음 스위치가
+   켜져 있으면 통째로 음소거하고 볼륨도 미디어가 아닌 벨소리를 따라간다.
+   무음 트랙을 함께 재생하면 'playback' 세션으로 바뀌어 스위치를 무시한다. */
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+           || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+let silence=null;
+function ensureSilence(){
+  if(silence) return silence;
+  const sr=8000, n=sr/2, b=new Uint8Array(44+n), dv=new DataView(b.buffer);
+  const put=(o,t)=>{for(let i=0;i<t.length;i++)b[o+i]=t.charCodeAt(i)};
+  put(0,'RIFF'); dv.setUint32(4,36+n,true); put(8,'WAVEfmt ');
+  dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+  dv.setUint32(24,sr,true); dv.setUint32(28,sr,true);
+  dv.setUint16(32,1,true); dv.setUint16(34,8,true);
+  put(36,'data'); dv.setUint32(40,n,true);
+  b.fill(0x80,44);                       /* 8비트 무부호 PCM에서 0x80이 무음 */
+  silence=new Audio(URL.createObjectURL(new Blob([b],{type:'audio/wav'})));
+  silence.loop=true; silence.setAttribute('playsinline',''); silence.volume=1;
+  return silence;
+}
+
 let wakeLock=null;
 async function keepAwake(on){
   try{
@@ -864,14 +885,23 @@ async function keepAwake(on){
     else { await wakeLock?.release(); wakeLock=null; }
   }catch(e){}
 }
+/* 전화·시리 같은 인터럽트나 백그라운드 전환 뒤엔 iOS가 컨텍스트를 멈춰둔다 */
+function nudgeAudio(){
+  if(!state.playing) return;
+  AC?.resume().catch(()=>{});
+  silence?.play().catch(()=>{});
+}
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible' && state.playing) keepAwake(true);
+  if(document.visibilityState==='visible' && state.playing){ keepAwake(true); nudgeAudio(); }
 });
 
 const playBtn=$('#play');
 playBtn.onclick=async()=>{
   ensureAudio();
   if(!state.playing){
+    /* 반드시 탭 제스처 안에서, await 앞에 걸어야 iOS가 재생을 허락한다 */
+    ensureSilence().play().catch(()=>{});
+    AC.onstatechange=()=>{ if(AC.state!=='running') nudgeAudio(); };
     await AC.resume();
     cancelFade();
     state.playing=true;
@@ -880,13 +910,30 @@ playBtn.onclick=async()=>{
     keepAwake(true);
   }else{
     state.playing=false;
+    silence?.pause();
     await AC.suspend();
     keepAwake(false);
   }
   playBtn.classList.toggle('on',state.playing);
   playBtn.setAttribute('aria-label',state.playing?'일시정지':'재생');
   $('#playHint').textContent = state.playing ? '이제 눈을 감아도 돼요' : '눌러서 바다를 켜요';
+  /* 무음 트랙으로도 안 되는 경우가 있어(벨소리 볼륨 0 등) 처음 한 번만 살짝 일러둔다 */
+  if(isIOS && state.playing && !sessionStorage.getItem('sea.iosHint')){
+    sessionStorage.setItem('sea.iosHint','1');
+    $('#playHint').textContent='소리가 안 들리면 옆면 무음 스위치와 볼륨을 확인해요';
+    setTimeout(()=>{ if(state.playing) $('#playHint').textContent='이제 눈을 감아도 돼요' },7000);
+  }
 };
+
+/* 무음 트랙 때문에 잠금화면에 재생 위젯이 뜬다. 거기서 누른 것도 버튼과 같이 움직이게 */
+if('mediaSession' in navigator){
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({title:'쉼, 바다',artist:'파도와 종달새'});
+    const sync=()=>{ playBtn.click(); };
+    navigator.mediaSession.setActionHandler('play',sync);
+    navigator.mediaSession.setActionHandler('pause',sync);
+  }catch(e){}
+}
 
 let fading=false;
 function startFade(){
@@ -896,6 +943,7 @@ function startFade(){
   setTimeout(async()=>{
     if(!fading) return;
     state.playing=false; state.timerEnd=0; fading=false;
+    silence?.pause();
     await AC.suspend();
     fadeGain.gain.cancelScheduledValues(AC.currentTime);
     fadeGain.gain.value=1;
