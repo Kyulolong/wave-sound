@@ -10,13 +10,18 @@
 <meta name="description" content="눈을 감으면 도착하는 바다. 열두 가지 소리를 섞어, 소중한 사람에게 편지와 함께 보내요.">
 <meta property="og:title" content="쉼, 바다">
 <meta property="og:description" content="눈을 감으면 도착하는 바다. 파도와 종달새를 섞어, 편지와 함께 보내요.">
-<meta property="og:image" content="https://wave-sound-seec.vercel.app/og.png">
-<meta property="og:url" content="https://wave-sound-seec.vercel.app/">
+<meta property="og:image" content="https://kyulolong.com/wave-sound/og.png">
+<meta property="og:url" content="https://kyulolong.com/wave-sound">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" href="icon-180.png">
+<!-- 자산 경로는 마운트 경로를 포함한 절대경로로 박는다.
+     이 앱은 kyulolong.com/wave-sound 에 얹히는데, 브라우저는 상대경로를
+     '문서 주소' 기준으로 푼다. 끝 슬래시가 없는 /wave-sound 에서 manifest.webmanifest 는
+     /manifest.webmanifest 가 되어 홈페이지에서 404 난다.
+     (manifest 안의 아이콘 경로는 manifest 자기 주소 기준이라 상대경로 그대로 둬도 된다) -->
+<link rel="manifest" href="/wave-sound/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/wave-sound/icon-180.png">
+<link rel="icon" href="/wave-sound/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&display=swap" rel="stylesheet">
 <style>
@@ -60,6 +65,21 @@ body.m-morning #celes,body.m-day #celes{background:#f6dca6;box-shadow:0 0 60px 1
   background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="520" height="78"><path d="M0 30 Q65 10 130 30 T260 30 T390 30 T520 30 V78 H0 Z" fill="%2313253a"/></svg>')}
 @keyframes drift{to{transform:translateX(-50%)}}
 main{position:relative;max-width:430px;margin:0 auto;padding:max(5vh,34px,calc(env(safe-area-inset-top,0px) + 24px)) 22px 130px;z-index:2}
+
+/* 브랜드 마크와 서명 — ~/.claude/DESIGN.md §7
+ *
+ * 이 앱은 밤바다에 커밋한다. 누락이 아니라 선택이다(§11): 여기서는 어둠이 크롬이
+ * 아니라 내용이다. 흰 종이로 뒤집으면 "쉼"이 아니라 그냥 사운드 믹서가 된다.
+ *
+ * 그래서 이 앱의 형광 한 점은 버튼이 아니라 브랜드 점 하나다. 재생 버튼은
+ * 일부러 형광으로 만들지 않았다 — 쉬라고 만든 화면에서 제일 밝은 게 "눌러"라고
+ * 소리치면 안 된다. 어두운 바탕이라 점은 --acid 를 그대로 쓴다(14.7:1).
+ */
+.brandline{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);letter-spacing:.02em;margin-bottom:14px}
+.brandline .dot{width:9px;height:9px;border-radius:50%;background:#8fff00;flex:none}
+.credit{display:block;margin-top:18px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10px;letter-spacing:.06em;color:var(--faint);transition:color .2s}
+.credit:hover{color:var(--muted)}
+
 #dateline{font-size:13px;color:var(--muted);letter-spacing:.02em}
 h1{font-size:23px;font-weight:400;line-height:1.5;margin:10px 0 26px}
 #play{
@@ -151,6 +171,7 @@ section#mixer{margin:20px 0 6px}
 <div class="sea w2"></div>
 
 <main>
+  <p class="brandline"><span class="dot" aria-hidden="true"></span>쉼, 바다</p>
   <p id="dateline"></p>
   <h1 id="greet"></h1>
 
@@ -174,7 +195,8 @@ section#mixer{margin:20px 0 6px}
   </div>
 
   <div id="giftRow"><button class="chip" id="giftBtn">이 바다를 선물하기</button></div>
-  <p id="foot">모든 소리는 이 페이지 안에서 실시간으로 태어나요.<br>이름도 편지도 링크 속에만 담겨요 — 서버엔 아무것도 남지 않아요.<br><span id="footHint" hidden>궁금한 밤에는 달을 톡, 톡, 톡.</span></p>
+  <p id="foot">모든 소리는 이 페이지 안에서 실시간으로 태어나요.<br>이름도 편지도 링크 속에만 담겨요 — 서버엔 아무것도 남지 않아요.<br><span id="footHint" hidden>궁금한 밤에는 달을 톡, 톡, 톡.</span>
+    <span class="credit">made by kyulolong</span></p>
 </main>
 
 <div id="breath" class="overlay" hidden>

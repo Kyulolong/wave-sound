@@ -2,7 +2,7 @@
   "name": "쉼, 바다",
   "short_name": "쉼, 바다",
   "description": "눈을 감으면 도착하는 바다",
-  "start_url": ".",
+  "start_url": "/wave-sound",
   "display": "standalone",
   "background_color": "#070d1d",
   "theme_color": "#070d1d",

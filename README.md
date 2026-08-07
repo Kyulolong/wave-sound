@@ -28,25 +28,41 @@ og.png                  공유 미리보기 이미지
 vercel.json             정적 호스팅 설정 (cleanUrls, 캐시 헤더)
 ```
 
+## 마운트 경로
+
+이 앱은 **`kyulolong.com/wave-sound` 한 곳**에 산다. 파비콘·매니페스트·OG 이미지 경로가
+`/wave-sound/…` 로 박혀 있어서 다른 경로에 얹으면 그 셋이 404 난다
+(앱 자체는 index.html 한 장에 다 들어 있어서 계속 돈다).
+
+옮길 일이 생기면 고칠 곳은 세 군데다 — `index.html` 의 `<link>` 3줄, `og:*` 2줄,
+`manifest.webmanifest` 의 `start_url`.
+
 ## 로컬에서 실행
 
 ```bash
 python3 -m http.server 8899 --bind 127.0.0.1
-# http://127.0.0.1:8899
+# http://127.0.0.1:8899 — 앱은 돌지만 파비콘/매니페스트는 404 (경로가 /wave-sound/ 기준이라)
+```
+
+배포된 모습 그대로 보려면 홈페이지 레포에서 프록시를 켠다:
+
+```bash
+cd ~/kyulolong-site
+SERVICE_WAVE_SOUND_ORIGIN=http://127.0.0.1:8899 npm run build && npm start
+# http://localhost:3000/wave-sound
 ```
 
 브라우저 정책상 첫 재생은 사용자 탭/클릭이 필요하다.
 
 ## 배포
 
-Vercel 정적 배포.
+Coolify 정적 배포. `kyulolong.com/wave-sound` 로 붙인다.
+빌드 과정이 없는 정적 파일 묶음이라 index.html·아이콘·매니페스트를 그대로 서빙하면 된다.
 
-```bash
-npx vercel --prod
-```
-
-배포 후 `index.html`의 `og:image`를 절대 URL(`https://<도메인>/og.png`)로 바꿔주면
-카카오톡·슬랙 등에서 미리보기가 제대로 뜬다.
+> 예전엔 Vercel(`wave-sound-seec.vercel.app`)에 있었다. 통합 계정을 쓰려면 홈페이지와
+> **같은 오리진**이어야 해서 옮겼다 — 오리진이 다르면 Supabase 세션이 공유되지 않는다.
+> 사본을 양쪽에 두지 않는 이유도 같다: `localStorage`(`sea.mix`)가 오리진마다 따로라
+> 들어온 문에 따라 저장된 믹스가 달라진다.
 
 ## 선물 링크가 만들어지는 방식
 
