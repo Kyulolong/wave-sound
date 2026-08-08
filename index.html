@@ -101,6 +101,9 @@ h1{font-size:23px;font-weight:400;line-height:1.5;margin:10px 0 26px}
   flex:0 0 auto;font-family:inherit;font-size:13px;color:var(--text);
   background:var(--chip-bg);border:1px solid var(--chip-bd);border-radius:999px;
   padding:7px 14px;cursor:pointer;transition:background .25s,color .25s;
+  /* #acctBtn 은 <a> 다 (/login 으로 나간다). 링크 기본 밑줄과 baseline 정렬을
+     여기서 눌러줘야 버튼 칩들과 한 줄에서 어긋나지 않는다. */
+  text-decoration:none;display:inline-flex;align-items:center;
 }
 .chip.on{background:rgba(235,242,248,.9);color:#16283e;border-color:transparent}
 section#mixer{margin:20px 0 6px}
@@ -162,7 +165,7 @@ section#mixer{margin:20px 0 6px}
 #gOut{font-size:11px;color:var(--muted)}
 .gbtns{display:flex;gap:8px;margin-top:10px;justify-content:center}
 .ghint{font-size:11.5px;color:var(--faint);margin-top:8px;text-align:center}
-#gClose,#kClose,#aClose{display:block;margin:18px auto 0;background:none;border:none;color:var(--faint);font-family:inherit;font-size:12px;cursor:pointer;padding:6px}
+#gClose,#kClose{display:block;margin:18px auto 0;background:none;border:none;color:var(--faint);font-family:inherit;font-size:12px;cursor:pointer;padding:6px}
 [hidden]{display:none !important}
 </style>
 </head>
@@ -200,7 +203,7 @@ section#mixer{margin:20px 0 6px}
     <button class="chip" id="giftBtn">이 바다를 선물하기</button>
     <!-- Supabase 설정이 없으면 계속 숨어 있는다 (아래 initCloud 참고) -->
     <button class="chip" id="keepBtn" hidden>이 바다 저장하기</button>
-    <button class="chip" id="acctBtn" hidden>로그인</button>
+    <a class="chip" id="acctBtn" hidden href="/login?next=%2Fwave-sound%2F">로그인</a>
   </div>
   <p id="foot">모든 소리는 이 페이지 안에서 실시간으로 태어나요.<br>이름도 편지도 링크 속에만 담겨요 — 서버엔 아무것도 남지 않아요.<br><span id="footHint" hidden>궁금한 밤에는 달을 톡, 톡, 톡.</span>
     <span class="credit">made by kyulolong</span></p>
@@ -225,39 +228,6 @@ section#mixer{margin:20px 0 6px}
   </div>
 </div>
 
-<div id="acct" class="overlay" hidden>
-  <div class="gpanel">
-    <p class="gtitle" id="aTitle">다른 기기에서도 이 바다를 들으려면</p>
-
-    <label class="glabel" for="aEmail">이메일</label>
-    <input id="aEmail" type="email" autocomplete="email" placeholder="you@example.com">
-
-    <label class="glabel" for="aPw">비밀번호 <span class="gopt">6자 이상</span></label>
-    <input id="aPw" type="password" autocomplete="current-password" placeholder="">
-    <!-- SMTP 를 붙이기 전까지는 재설정 메일을 못 보낸다. 되돌릴 수 없는 건
-         되돌릴 수 없다고 미리 말한다 — 나중에 알게 하는 게 제일 나쁘다.
-         SMTP 가 붙으면 이 문단을 지우면 된다. -->
-    <p id="aPwWarn" class="ghint" style="text-align:left;margin-top:6px;color:var(--muted)">
-      지금은 비밀번호를 잊으면 되돌릴 수 없어요. 재설정 메일을 아직 못 보내거든요 —
-      어딘가 적어두시면 안심이에요.
-    </p>
-
-    <div id="aNickRow">
-      <label class="glabel" for="aNick">닉네임 <span class="gopt">선택 · 규로롱에서 이 이름으로 보여드려요</span></label>
-      <input id="aNick" type="text" maxlength="20" placeholder="예: 규로롱">
-      <p class="ghint" style="text-align:left;margin-top:6px">
-        <a href="https://perplz.com" target="_blank" rel="noreferrer noopener"
-           style="color:var(--muted);text-decoration:underline;text-underline-offset:3px">퍼플즈 ↗</a>
-        를 쓰신다면 같은 닉네임으로 넣어주세요. 알아보기 좋아요.
-      </p>
-    </div>
-
-    <button class="chip gmain" id="aGo">계정 만들기</button>
-    <p id="aHint" class="ghint"></p>
-    <button id="aSwap" style="display:block;margin:14px auto 0;background:none;border:0;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">이미 계정이 있어요 · 로그인</button>
-    <button id="aClose">닫기</button>
-  </div>
-</div>
 
 <div id="letter" class="overlay" hidden>
   <div class="paper">
@@ -1244,16 +1214,14 @@ async function accountState(){
   return { kind: u.is_anonymous ? 'anon' : 'named', user:u };
 }
 
+/* 라벨만 그린다. 누르면 /login 으로 간다 — 이 앱에는 로그인 화면이 없다.
+   익명은 '로그인한 것'으로 치지 않는다: 계정이 아직 이 기기에만 있는 상태다. */
 async function paintAccount(){
   const { kind, user } = await accountState();
   const btn = $('#acctBtn');
-  if(kind === 'named'){
-    btn.textContent = user.user_metadata?.nickname || '내 계정';
-  }else if(kind === 'anon'){
-    btn.textContent = '계정 연결';
-  }else{
-    btn.textContent = '로그인';
-  }
+  btn.textContent = kind === 'named'
+    ? (user.user_metadata?.nickname || '내 계정')
+    : kind === 'anon' ? '계정 연결하기' : '로그인';
 }
 
 /* 계정이 없으면 이때 만든다. 익명이라 입력할 게 없다. */
@@ -1334,92 +1302,6 @@ $('#kSave').onclick = async ()=>{
   }catch(e){
     /* 사용자를 다그치지 않는다 — 방금 만든 믹스는 화면에 그대로 있다 */
     kHint.textContent = '저장이 안 됐어요. 지금 듣고 계신 소리는 그대로니 잠시 뒤 다시 눌러보세요.';
-  }
-};
-
-/* ---------- 계정 연결 · 로그인 ---------- */
-const acctEl = $('#acct'), aEmail = $('#aEmail'), aPw = $('#aPw'),
-      aNick = $('#aNick'), aHint = $('#aHint'), aGo = $('#aGo'),
-      aSwap = $('#aSwap'), aTitle = $('#aTitle'), aNickRow = $('#aNickRow');
-
-let acctMode = 'create';   // 'create' = 만들기·연결 / 'signin' = 로그인
-
-function paintAcctMode(){
-  const creating = acctMode === 'create';
-  aTitle.textContent = creating ? '다른 기기에서도 이 바다를 들으려면' : '다시 오셨네요';
-  aGo.textContent    = creating ? '계정 만들기' : '로그인';
-  aSwap.textContent  = creating ? '이미 계정이 있어요 · 로그인' : '처음이신가요 · 계정 만들기';
-  aNickRow.hidden    = !creating;             // 로그인할 땐 닉네임을 다시 물을 이유가 없다
-  /* 비번을 '정하는' 순간에만 보여준다. 로그인 화면에서는 이미 늦은 얘기라
-     겁만 주고 할 수 있는 게 없다 */
-  $('#aPwWarn').hidden = !creating;
-  aPw.autocomplete   = creating ? 'new-password' : 'current-password';
-  aHint.textContent  = '';
-}
-aSwap.onclick = ()=>{ acctMode = acctMode === 'create' ? 'signin' : 'create'; paintAcctMode(); };
-
-$('#acctBtn').onclick = async ()=>{
-  const { kind, user } = await accountState();
-
-  if(kind === 'named'){
-    /* 이미 연결된 계정이면 로그아웃만 물어본다 */
-    const who = user.user_metadata?.nickname || user.email;
-    if(confirm(`${who} 으로 로그인되어 있어요. 로그아웃할까요?\n저장한 바다는 다시 로그인하면 그대로 있어요.`)){
-      await sb.auth.signOut();
-      myMixes = []; renderMyMixes(); await paintAccount();
-    }
-    return;
-  }
-
-  /* 익명으로 쓰던 사람은 '연결', 아무것도 없는 사람은 '로그인'을 먼저 보여준다 */
-  acctMode = kind === 'anon' ? 'create' : 'signin';
-  paintAcctMode();
-  aEmail.value = ''; aPw.value = ''; aNick.value = '';
-  acctEl.hidden = false;
-  aEmail.focus();
-};
-$('#aClose').onclick = ()=>{ acctEl.hidden = true; };
-
-aGo.onclick = async ()=>{
-  const email = aEmail.value.trim(), pw = aPw.value, nick = aNick.value.trim();
-  if(!email){ aHint.textContent = '이메일만 적어주시면 돼요.'; aEmail.focus(); return; }
-  if(pw.length < 6){ aHint.textContent = '비밀번호는 6자 이상이면 돼요.'; aPw.focus(); return; }
-
-  aHint.textContent = acctMode === 'create' ? '연결하는 중…' : '들어가는 중…';
-  try{
-    if(acctMode === 'signin'){
-      const { error } = await sb.auth.signInWithPassword({ email, password:pw });
-      if(error) throw error;
-    }else{
-      const { kind } = await accountState();
-      if(kind === 'anon'){
-        /* ★ 익명 계정을 '승격'시킨다. 새로 만들지 않으므로 user_id 가 그대로고,
-              지금까지 저장한 바다가 전부 따라온다. 여기서 signUp 을 쓰면
-              계정이 새로 생겨서 저장분이 통째로 고아가 된다. */
-        const { error } = await sb.auth.updateUser({
-          email, password:pw, data: nick ? { nickname:nick } : undefined,
-        });
-        if(error) throw error;
-      }else{
-        const { error } = await sb.auth.signUp({
-          email, password:pw, options:{ data: nick ? { nickname:nick } : {} },
-        });
-        if(error) throw error;
-      }
-    }
-    await refreshMyMixes();
-    await paintAccount();
-    acctEl.hidden = true;
-  }catch(e){
-    const m = (e && e.message || '').toLowerCase();
-    /* 다그치지 않는다 — 무슨 일인지와 어떻게 하면 되는지만 말한다 */
-    if(m.includes('already') || m.includes('registered') || m.includes('exists')){
-      aHint.textContent = '이미 쓰고 계신 이메일이에요. 아래에서 로그인으로 바꿔보세요.';
-    }else if(m.includes('invalid') || m.includes('credentials')){
-      aHint.textContent = '이메일이나 비밀번호가 맞지 않아요. 한 번만 더 확인해 주세요.';
-    }else{
-      aHint.textContent = '지금은 연결이 안 되네요. 잠시 뒤 다시 눌러보세요. 듣던 소리는 그대로예요.';
-    }
   }
 };
 
