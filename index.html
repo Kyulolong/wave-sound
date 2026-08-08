@@ -71,12 +71,12 @@ main{position:relative;max-width:430px;margin:0 auto;padding:max(5vh,34px,calc(e
  * 이 앱은 밤바다에 커밋한다. 누락이 아니라 선택이다(§11): 여기서는 어둠이 크롬이
  * 아니라 내용이다. 흰 종이로 뒤집으면 "쉼"이 아니라 그냥 사운드 믹서가 된다.
  *
- * 그래서 이 앱의 형광 한 점은 버튼이 아니라 브랜드 점 하나다. 재생 버튼은
+ * 그래서 이 앱의 형광 한 점은 버튼이 아니라 브랜드 마크 하나다. 재생 버튼은
  * 일부러 형광으로 만들지 않았다 — 쉬라고 만든 화면에서 제일 밝은 게 "눌러"라고
  * 소리치면 안 된다. 어두운 바탕이라 점은 --acid 를 그대로 쓴다(14.7:1).
  */
 .brandline{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);letter-spacing:.02em;margin-bottom:14px}
-.brandline .dot{width:9px;height:9px;border-radius:50%;background:#8fff00;flex:none}
+.brandline .dot{width:14px;height:14px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M5.6 3.2 H26.4 L18.39 21.20 L12.37 21.20 L18.11 8.3 H5.6 Z' fill='%2314180F' stroke='%2314180F' stroke-width='3.0' stroke-linejoin='round'/%3E%3Ccircle cx='15.38' cy='27.65' r='3.85' fill='%2314180F'/%3E%3Cpath d='M5.6 3.2 H26.4 L18.39 21.20 L12.37 21.20 L18.11 8.3 H5.6 Z' fill='%238FFF00' stroke='%238FFF00' stroke-width='1.5' stroke-linejoin='round'/%3E%3Ccircle cx='15.38' cy='27.65' r='3.1' fill='%238FFF00'/%3E%3C/svg%3E") no-repeat center / contain}
 .credit{display:block;margin-top:18px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10px;letter-spacing:.06em;color:var(--faint);transition:color .2s}
 .credit:hover{color:var(--muted)}
 
