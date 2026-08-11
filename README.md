@@ -3,6 +3,10 @@
 눈을 감으면 도착하는 바다.
 파도와 종달새 소리를 섞어, 소중한 사람에게 편지와 함께 보내는 작은 휴식 웹앱.
 
+> **이 앱은 `kyulolong.com/wave-sound/` 에 얹혀 있다.** 경로 위에 사는 앱이라 따로 지켜야 할 것들이 있다 —
+> base·끝 슬래시·파비콘·SEO·Supabase·nginx·배포 순서. 손대기 전에
+> [규로롱 서비스 체크리스트](https://github.com/Kyulolong/kyulolong-site/blob/main/docs/SERVICE-CHECKLIST.md)를 읽을 것.
+
 ## 특징
 
 - **오디오 파일 없음** — 12가지 소리를 브라우저에서 Web Audio로 직접 합성
