@@ -135,12 +135,12 @@ h1{font-size:23px;font-weight:400;line-height:1.5;margin:10px 0 26px}
    사라진 것처럼 보인 게 이것 때문이다. 이제 두 줄로 접힌다.
    overflow-x 는 남겨둔다: .chip 은 flex:0 0 auto 라 이름이 아주 긴 칩 하나는
    여전히 안 접히고, 그때는 가로 스크롤이 유일한 탈출구다. */
-.chips{display:flex;gap:8px;flex-wrap:wrap;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.chips{display:flex;gap:10px 10px;flex-wrap:wrap;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{
   flex:0 0 auto;font-family:inherit;font-size:13px;color:var(--text);
   background:var(--chip-bg);border:1px solid var(--chip-bd);border-radius:999px;
-  padding:7px 14px;cursor:pointer;transition:background .25s,color .25s;
+  padding:9px 16px;cursor:pointer;transition:background .25s,color .25s;
   /* #acctBtn 은 <a> 다 (/login 으로 나간다). 링크 기본 밑줄과 baseline 정렬을
      여기서 눌러줘야 버튼 칩들과 한 줄에서 어긋나지 않는다. */
   text-decoration:none;display:inline-flex;align-items:center;
@@ -181,32 +181,46 @@ section#mixer{margin:20px 0 6px}
   margin-top:22px;font-family:inherit;font-size:12.5px;color:#7a7365;
   background:none;border:none;border-bottom:1px solid #c9c2b2;cursor:pointer;padding:2px 0;
 }
-#giftRow{display:flex;justify-content:center;margin-top:30px}
+#giftRow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:32px}
 #gift{background:rgba(5,9,18,.78);backdrop-filter:blur(5px);overflow-y:auto;justify-content:flex-start}
 .gpanel{
   width:min(92vw,360px);background:#101b30;border:1px solid rgba(255,255,255,.14);
-  border-radius:18px;padding:26px 22px;margin:auto;
+  border-radius:18px;padding:28px 24px;margin:auto;
 }
-.gtitle{font-size:17px;margin-bottom:14px}
-.glabel{display:block;font-size:12.5px;color:var(--muted);margin:14px 0 6px}
+.gtitle{font-size:17px;margin-bottom:6px}
+.glabel{display:block;font-size:12.5px;color:var(--muted);margin:18px 0 7px}
 .gopt{color:var(--faint);font-size:11.5px}
 /* email/password 도 같은 모양이어야 한다. type=text 만 잡아두면
    새 입력칸이 브라우저 기본 스타일로 튄다 (계정 화면에서 한 번 밟았다) */
 .gpanel input[type=text],.gpanel input[type=email],.gpanel input[type=password],.gpanel textarea{
   width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);
-  border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;padding:10px 12px;outline:none;
+  border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;outline:none;
 }
 .gpanel textarea{resize:vertical;line-height:1.8}
 .gpanel input:focus,.gpanel textarea:focus{border-color:rgba(159,205,226,.6)}
 .gcheck{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);margin:14px 0 18px;cursor:pointer}
 .gcheck input{accent-color:var(--accent)}
-.gmain{width:100%;text-align:center;font-size:14px;padding:11px 0}
+.gmain{width:100%;text-align:center;font-size:14px;padding:13px 0}
+/* 입력칸 다음이 곧바로 버튼이면 그 사이를 벌린다. 손가락 하나 굵기는 있어야
+   "쓰는 곳"과 "누르는 곳"이 다른 물건으로 읽힌다. 선물 패널은 앞에 .gcheck 가
+   여백을 만들어 주니 여기 해당하지 않는다. */
+.gpanel input + .gmain,.gpanel textarea + .gmain{margin-top:20px}
 #gResult{margin-top:16px}
 #gOut{font-size:11px;color:var(--muted)}
-.gbtns{display:flex;gap:8px;margin-top:10px;justify-content:center}
+.gbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;justify-content:center}
 .ghint{font-size:11.5px;color:var(--faint);margin-top:8px;text-align:center}
-#gClose,#kClose{display:block;margin:18px auto 0;background:none;border:none;color:var(--faint);font-family:inherit;font-size:12px;cursor:pointer;padding:6px}
+#gClose,#kClose{display:block;margin:24px auto 0;background:none;border:none;color:var(--faint);font-family:inherit;font-size:12px;cursor:pointer;padding:6px}
 [hidden]{display:none !important}
+
+/* 좁은 화면일수록 같은 간격도 더 붙어 보인다 — 여기서만 한 단계 더 벌린다.
+   이 블록은 스타일시트 맨 끝에 있어야 한다: 같은 특이도면 나중에 온 쪽이 이긴다. */
+@media (max-width:480px){
+  .chips{gap:12px 10px}
+  #giftRow{gap:12px}
+  .chip{padding:10px 16px}
+  .gpanel input + .gmain,.gpanel textarea + .gmain{margin-top:24px}
+  .gpanel{padding:30px 22px}
+}
 </style>
 </head>
 <body>
