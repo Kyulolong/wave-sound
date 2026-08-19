@@ -211,7 +211,11 @@ section#mixer{margin:20px 0 6px}
 .gpanel input:focus,.gpanel textarea:focus{border-color:rgba(159,205,226,.6)}
 .gcheck{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);margin:14px 0 18px;cursor:pointer}
 .gcheck input{accent-color:var(--accent)}
-.gmain{width:100%;text-align:center;font-size:14px;padding:13px 0}
+/* 가로 padding 이 0 이었다. .chip 이 inline-flex 라 text-align:center 는
+   먹지 않고(글자는 익명 플렉스 아이템이라 flex-start 로 붙는다) 결국 글자가
+   테두리에 그대로 닿았다. 왼쪽 정렬은 그대로 두되 — 위 입력칸들과 글자 시작
+   선이 맞는다 — 알약 모양이라 곡선을 피해 한 뼘 더 준다. */
+.gmain{width:100%;text-align:left;justify-content:flex-start;font-size:14px;padding:13px 18px}
 /* 입력칸 다음이 곧바로 버튼이면 그 사이를 벌린다. 손가락 하나 굵기는 있어야
    "쓰는 곳"과 "누르는 곳"이 다른 물건으로 읽힌다. 선물 패널은 앞에 .gcheck 가
    여백을 만들어 주니 여기 해당하지 않는다. */
