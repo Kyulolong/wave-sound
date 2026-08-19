@@ -46,13 +46,24 @@ body.m-evening{background:linear-gradient(180deg,#131a38 0%,#2c2a52 48%,#5e4468 
 .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#dfe9f2;animation:tw 4s ease-in-out infinite}
 body.m-morning .star,body.m-day .star{display:none}
 @keyframes tw{0%,100%{opacity:.15}50%{opacity:.8}}
+/* 달은 fixed 가 아니라 absolute 다.
+ *
+ * fixed 였을 땐 화면 오른쪽 위에 계속 떠 있었는데, z-index:3 으로 main 위에
+ * 올려둔 탓에(그래야 탭이 안 먹힌다) 스크롤해 내려가면 '먼 천둥'·'시냇물'
+ * 슬라이더 트랙을 그대로 덮고 앉았다 — 보기에도 겹치고, 그 자리를 만지면
+ * 볼륨이 아니라 달이 눌렸다. 앱(standalone)으로 깔면 화면이 더 길어서 더 심했다.
+ *
+ * absolute 는 위치 기준이 뷰포트가 아니라 문서라 처음 자리는 그대로면서
+ * 스크롤과 함께 위로 사라진다. 달은 첫 화면의 하늘에만 뜬다.
+ * 다만 화면이 넓으면 본문 단(430px)과 달이 만날 일이 없으니, 그땐 fixed 로
+ * 되돌려 원래의 '떠 있는 달'을 지킨다(아래 min-width:900px). */
 #celes{
-  position:fixed;top:9%;right:11%;width:58px;height:58px;border-radius:50%;
+  position:absolute;top:9%;right:11%;width:58px;height:58px;border-radius:50%;
   background:#e9e5d8;box-shadow:0 0 46px 8px rgba(233,229,216,.32);
-  /* main(z-index:2)이 좁은 화면에서 달 영역을 덮어 탭을 가로채므로 그 위로 올린다 */
   cursor:pointer;z-index:3;transition:background 2s,box-shadow 2s;
   animation:float 14s ease-in-out infinite;
 }
+@media (min-width:900px){ #celes{position:fixed} }
 body.m-morning #celes,body.m-day #celes{background:#f6dca6;box-shadow:0 0 60px 14px rgba(246,220,166,.4)}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 
@@ -259,7 +270,7 @@ section#mixer{margin:20px 0 6px}
     <button class="chip" id="keepBtn" hidden>이 바다 저장하기</button>
     <a class="chip" id="acctBtn" hidden href="/login?next=%2Fwave-sound%2F">로그인</a>
   </div>
-  <p id="foot">모든 소리는 이 페이지 안에서 실시간으로 태어나요.<br>이름도 편지도 링크 속에만 담겨요 — 서버엔 아무것도 남지 않아요.<br><span id="footHint" hidden>궁금한 밤에는 달을 톡, 톡, 톡.</span>
+  <p id="foot">모든 소리는 이 페이지 안에서 실시간으로 태어나요.<br>이름도 편지도 링크 속에만 담겨요 — 서버엔 아무것도 남지 않아요.<br><span id="footHint" hidden>궁금한 밤에는 맨 위로 올라가, 달을 톡, 톡, 톡.</span>
     <span class="credit">made by kyulolong</span></p>
 </main>
 
