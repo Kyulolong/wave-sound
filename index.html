@@ -55,6 +55,41 @@ body.m-morning .star,body.m-day .star{display:none}
 }
 body.m-morning #celes,body.m-day #celes{background:#f6dca6;box-shadow:0 0 60px 14px rgba(246,220,166,.4)}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+/* 편지가 담긴 링크일 때만 달에 걸리는 표시 — 고리가 세 번 번지고 한참 쉰다.
+ * 리듬 자체가 안내문이다("톡, 톡, 톡"). 화살표나 말풍선을 달지 않은 건
+ * 쉬라고 만든 화면에서 제일 눈에 띄는 게 지시문이면 안 되기 때문이다.
+ * 한 번 열어 본 뒤엔 .hasletter 를 떼서 조용해진다 — 안내는 할 일을 끝냈다. */
+#celes::after{
+  content:"";position:absolute;inset:-11px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.55);opacity:0;pointer-events:none;
+}
+#celes.hasletter::after{animation:tok 9s ease-out infinite}
+@keyframes tok{
+  0%  {transform:scale(.84);opacity:0}
+  2%  {opacity:.5}
+  8%  {transform:scale(1.22);opacity:0}
+  9%  {transform:scale(.84);opacity:0}
+  11% {opacity:.5}
+  17% {transform:scale(1.22);opacity:0}
+  18% {transform:scale(.84);opacity:0}
+  20% {opacity:.5}
+  26% {transform:scale(1.22);opacity:0}
+  27%,100%{transform:scale(.84);opacity:0}
+}
+/* 눌린 게 셋 중 몇 번째인지는 안 세어 준다(그럼 퀴즈가 된다). 다만 눌리긴
+   했다는 것만 한 번 번쩍여 준다 — 안 그러면 두 번째 탭에서 다들 멈춘다. */
+#celes::before{
+  content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.7);opacity:0;pointer-events:none;
+}
+#celes.tok::before{animation:tokhit .55s ease-out}
+@keyframes tokhit{from{transform:scale(.9);opacity:.75}to{transform:scale(1.35);opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  /* 번지는 대신 그냥 조용히 걸려 있는 고리 하나로 */
+  #celes.hasletter::after{animation:none;opacity:.32;transform:scale(1)}
+  #celes.tok::before{animation:none}
+}
 @media (max-width:480px){
   #celes{width:46px;height:46px;top:max(3.5%,calc(env(safe-area-inset-top,0px) + 10px));right:5.5%}
 }
@@ -267,6 +302,9 @@ section#mixer{margin:20px 0 6px}
 <script>
 /* ===== 선물 링크: 이름·편지·믹스가 URL 해시(#g=…) 안에만 담겨요. 서버 저장 없음 ===== */
 const GIFT = { n:'', l:'', b:'', m:null };
+/* 선물 링크가 아니어도 달 안엔 늘 편지가 한 통 들어 있다. 빈 이스터에그는
+   세 번 눌러 본 사람에게 아무것도 주지 않는다. */
+const DEFAULT_LETTER = '여기까지 온 걸 보니, 오늘 좀 지쳤나 봐요.\n\n파도는 끝을 재촉하지 않아요. 밀려왔다 물러가고, 또 밀려와요.\n숨도 그렇게 쉬어요. 오늘은 그거면 충분해요.';
 let giftRaw = '';
 
 function bytesToB64u(bytes){
@@ -1053,13 +1091,26 @@ dim.onclick=()=>{
 };
 
 /* ---------- 달을 세 번 두드리면 (편지가 담긴 링크일 때만) ---------- */
-let taps=[], letterEl=$('#letter');
-$('#celes').onclick=()=>{
-  if(!GIFT.l) return;
+let taps=[], letterEl=$('#letter'), celesEl=$('#celes');
+
+/* 편지가 있을 때만 달이 눌러도 되는 것처럼 보이게 한다. 없을 땐 표시도 없고
+   role 도 없다 — 눌러 봐야 아무 일도 안 일어나는 버튼을 만들지 않으려고. */
+function markMoon(){
+  celesEl.classList.add('hasletter');
+  celesEl.title='달을 세 번, 톡 톡 톡';
+  celesEl.setAttribute('role','button');
+  celesEl.setAttribute('tabindex','0');
+  celesEl.setAttribute('aria-label','숨겨둔 편지 — 세 번 누르면 열려요');
+}
+
+function tapMoon(){
+  celesEl.classList.remove('tok'); void celesEl.offsetWidth; celesEl.classList.add('tok');
   const now=Date.now();
   taps=taps.filter(t=>now-t<3000); taps.push(now);
-  if(taps.length>=3){ taps=[]; letterEl.hidden=false; }
-};
+  if(taps.length>=3){ taps=[]; letterEl.hidden=false; celesEl.classList.remove('hasletter'); }
+}
+celesEl.onclick=tapMoon;
+celesEl.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tapMoon(); } };
 $('#letterClose').onclick=()=>{letterEl.hidden=true};
 
 /* ---------- 이 바다를 선물하기 ---------- */
@@ -1133,11 +1184,10 @@ initGift().then(()=>{
   applyDay(true);
   refreshSky();
   restoreMix();
-  if(GIFT.l){ $('#letterBody').textContent=GIFT.l; $('#footHint').hidden=false; }
-  else if(GIFT.err){
-    $('#footHint').textContent='링크가 조금 다쳤나 봐요. 보낸 사람에게 다시 받아 볼래요?';
-    $('#footHint').hidden=false;
-  }
+  $('#letterBody').textContent = GIFT.l || DEFAULT_LETTER;
+  $('#footHint').hidden=false;
+  markMoon();
+  if(GIFT.err) $('#footHint').textContent='링크가 조금 다쳤나 봐요. 보낸 사람에게 다시 받아 볼래요?';
 });
 </script>
 
